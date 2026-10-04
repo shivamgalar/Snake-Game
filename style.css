@@ -2,6 +2,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -9,17 +10,22 @@ body {
   color: #ffffff;
   font-family: sans-serif;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 main {
   width: 100%;
   max-width: 600px;
   height: 100vh;
+  height: 100dvh;
   padding: 12px;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
 }
@@ -43,6 +49,7 @@ section {
 
 .board {
   flex-grow: 1;
+  min-height: 0;
   border: 2px solid #ffffff;
   border-radius: 4px;
   display: grid;
@@ -50,6 +57,7 @@ section {
   grid-template-rows: repeat(var(--rows), 1fr);
   touch-action: none;
   background-color: #000000;
+  position: relative;
 }
 
 .block {
@@ -81,10 +89,15 @@ section {
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
+  touch-action: manipulation;
 }
 
 .btn-action:hover {
   background-color: #45a049;
+}
+
+.btn-action:active {
+  transform: scale(0.98);
 }
 
 .mobile-controls {
@@ -111,9 +124,15 @@ section {
   touch-action: manipulation;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.1s;
 }
 
-.btn-ctrl:active {
+.btn-ctrl:active,
+.btn-ctrl.active {
   background-color: #4caf50;
 }
 
@@ -124,6 +143,7 @@ section {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
@@ -152,8 +172,52 @@ section {
   font-size: 2rem;
 }
 
+/* Hide mobile controls on desktop screens */
 @media (min-width: 768px) {
   .mobile-controls {
     display: none;
+  }
+}
+
+/* Mobile Screen Adaptations */
+@media (max-height: 650px) and (orientation: portrait) {
+  section {
+    gap: 6px;
+  }
+
+  .infos {
+    padding: 8px;
+  }
+
+  .btn-ctrl {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* Mobile Landscape Adaptation */
+@media (orientation: landscape) and (max-height: 500px) {
+  main {
+    max-width: 100%;
+    padding: 8px;
+  }
+
+  section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .board {
+    height: 100%;
+    width: auto;
+    aspect-ratio: 1 / 1;
+    flex-grow: 0;
+  }
+
+  .btn-ctrl {
+    width: 44px;
+    height: 44px;
   }
 }

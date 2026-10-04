@@ -12,8 +12,8 @@ const modalRestartBtn = document.getElementById('modal-restart-btn');
 const blockWidth = window.innerWidth < 600 ? 25 : 35;
 const blockHeight = blockWidth;
 
-const cols = Math.floor(board.clientWidth / blockWidth);
-const rows = Math.floor(board.clientHeight / blockHeight);
+let cols = Math.floor(board.clientWidth / blockWidth) || 20;
+let rows = Math.floor(board.clientHeight / blockHeight) || 20;
 
 board.style.setProperty('--cols', cols);
 board.style.setProperty('--rows', rows);
@@ -33,14 +33,27 @@ let secondsElapsed = 0;
 highScoreEl.innerText = highScore;
 
 // Generate Grid
-for (let row = 0; row < rows; row++) {
-  for (let col = 0; col < cols; col++) {
-    const block = document.createElement('div');
-    block.classList.add('block');
-    blocks[`${row},${col}`] = block;
-    board.appendChild(block);
+function createGrid() {
+  board.innerHTML = '';
+  for (let key in blocks) delete blocks[key];
+
+  cols = Math.floor(board.clientWidth / blockWidth) || 20;
+  rows = Math.floor(board.clientHeight / blockHeight) || 20;
+
+  board.style.setProperty('--cols', cols);
+  board.style.setProperty('--rows', rows);
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const block = document.createElement('div');
+      block.classList.add('block');
+      blocks[`${row},${col}`] = block;
+      board.appendChild(block);
+    }
   }
 }
+
+createGrid();
 
 function formatTime(sec) {
   const mins = Math.floor(sec / 60);
@@ -89,7 +102,9 @@ function initGame() {
 
 function spawnFood() {
   let valid = false;
-  while (!valid) {
+  let attempts = 0;
+  while (!valid && attempts < 1000) {
+    attempts++;
     const r = Math.floor(Math.random() * rows);
     const c = Math.floor(Math.random() * cols);
     const inSnake = snake.some(segment => segment.x === r && segment.y === c);
@@ -101,25 +116,100 @@ function spawnFood() {
 }
 
 function setDirection(newDir) {
-  if (newDir === 'up' && direction !== 'down') nextDirection = 'up';
-  if (newDir === 'down' && direction !== 'up') nextDirection = 'down';
-  if (newDir === 'left' && direction !== 'right') nextDirection = 'left';
-  if (newDir === 'right' && direction !== 'left') nextDirection = 'right';
+  // Prevent immediate 180-degree reverse into neck
+  if (snake.length > 1) {
+    const head = snake[0];
+    const neck = snake[1];
+    if (newDir === 'up' && head.x - 1 === neck.x && head.y === neck.y) return;
+    if (newDir === 'down' && head.x + 1 === neck.x && head.y === neck.y) return;
+    if (newDir === 'left' && head.x === neck.x && head.y - 1 === neck.y) return;
+    if (newDir === 'right' && head.x === neck.x && head.y + 1 === neck.y) return;
+  } else {
+    if (newDir === 'up' && direction !== 'down') nextDirection = 'up';
+    if (newDir === 'down' && direction !== 'up') nextDirection = 'down';
+    if (newDir === 'left' && direction !== 'right') nextDirection = 'left';
+    if (newDir === 'right' && direction !== 'left') nextDirection = 'right';
+    return;
+  }
+  nextDirection = newDir;
 }
 
-// Keyboard controls
+// Keyboard controls (Computer)
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowUp' || e.key === 'w') setDirection('up');
-  if (e.key === 'ArrowDown' || e.key === 's') setDirection('down');
-  if (e.key === 'ArrowLeft' || e.key === 'a') setDirection('left');
-  if (e.key === 'ArrowRight' || e.key === 'd') setDirection('right');
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+    e.preventDefault();
+  }
+  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') setDirection('up');
+  if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') setDirection('down');
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') setDirection('left');
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') setDirection('right');
 });
 
-// Touch controls
-document.getElementById('up')?.addEventListener('click', () => setDirection('up'));
-document.getElementById('down')?.addEventListener('click', () => setDirection('down'));
-document.getElementById('left')?.addEventListener('click', () => setDirection('left'));
-document.getElementById('right')?.addEventListener('click', () => setDirection('right'));
+// Mobile Touch Controls (Instant response on touchstart & pointerdown)
+const controlButtons = [
+  { id: 'up', dir: 'up' },
+  { id: 'down', dir: 'down' },
+  { id: 'left', dir: 'left' },
+  { id: 'right', dir: 'right' }
+];
+
+controlButtons.forEach(({ id, dir }) => {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+
+  const handleTouch = (e) => {
+    if (e.cancelable) e.preventDefault();
+    setDirection(dir);
+    btn.classList.add('active');
+    if (navigator.vibrate) navigator.vibrate(10);
+  };
+
+  const handleRelease = () => {
+    btn.classList.remove('active');
+  };
+
+  btn.addEventListener('touchstart', handleTouch, { passive: false });
+  btn.addEventListener('touchend', handleRelease, { passive: true });
+  btn.addEventListener('pointerdown', handleTouch);
+  btn.addEventListener('pointerup', handleRelease);
+  btn.addEventListener('pointerleave', handleRelease);
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    setDirection(dir);
+  });
+});
+
+// Mobile Swipe Gestures on the Board
+let touchStartX = 0;
+let touchStartY = 0;
+
+board.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+board.addEventListener('touchmove', (e) => {
+  if (e.cancelable) e.preventDefault();
+}, { passive: false });
+
+board.addEventListener('touchend', (e) => {
+  if (e.changedTouches.length === 1) {
+    const diffX = e.changedTouches[0].clientX - touchStartX;
+    const diffY = e.changedTouches[0].clientY - touchStartY;
+    const minDistance = 20;
+
+    if (Math.hypot(diffX, diffY) > minDistance) {
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        setDirection(diffX > 0 ? 'right' : 'left');
+      } else {
+        setDirection(diffY > 0 ? 'down' : 'up');
+      }
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+  }
+}, { passive: true });
 
 // Restart buttons
 restartBtn.addEventListener('click', initGame);
@@ -128,6 +218,8 @@ modalRestartBtn.addEventListener('click', initGame);
 function handleGameOver() {
   clearInterval(gameInterval);
   stopTimer();
+
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
   modalScoreEl.innerText = score;
   modalTimeEl.innerText = formatTime(secondsElapsed);
@@ -158,7 +250,7 @@ function gameStep() {
   snake.unshift(head);
 
   // Food collision check
-  if (head.x === food.x && head.y === food.y) {
+  if (food && head.x === food.x && head.y === food.y) {
     score += 10;
     scoreEl.innerText = score;
     if (score > highScore) {
@@ -166,6 +258,7 @@ function gameStep() {
       highScoreEl.innerText = highScore;
       localStorage.setItem('snakeHighScore', highScore);
     }
+    if (navigator.vibrate) navigator.vibrate(15);
     spawnFood();
   } else {
     snake.pop();
@@ -190,6 +283,20 @@ function render() {
     if (blocks[foodKey]) blocks[foodKey].classList.add('food');
   }
 }
+
+// Re-adjust grid if screen orientation/size changes
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    const newCols = Math.floor(board.clientWidth / blockWidth) || 20;
+    const newRows = Math.floor(board.clientHeight / blockHeight) || 20;
+    if (newCols !== cols || newRows !== rows) {
+      createGrid();
+      initGame();
+    }
+  }, 250);
+});
 
 // Start game on load
 initGame();
