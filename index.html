@@ -1,52 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnakeGame</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Snake Game</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-    <main>
-        <section>
-            <div class="infos">
-                <div class="info">
-                    <h3>High Score:
-                        <span id="high-score">0</span>
-                    </h3>
-                </div>
-
-                <div class="info">
-                    <h3> Score:
-                        <span id="score">0</span>
-                    </h3>
-                </div>
-
-                <div class="info">
-                    <h3>Time:
-                        <span id="Time">00-00</span>
-                    </h3>
-                </div>
-            </div>
-
-            <div class="board"></div>
-        </section>
-
-        <div class="modal">
-            <div class="start-game">
-                <h3>Welcome to Snake Game</h3>
-                <button class="btn-start">Start Game </button>
-            </div>
-            <div class="game-over">
-                <h3>Game Over</h3>
-                <button class="btn-restart">Restart Game </button>
-            </div>
+  <main>
+    <section>
+      <div class="infos">
+        <div class="info">
+          <h3>Score: <span id="score">0</span></h3>
         </div>
-    </main>
+        <div class="info">
+          <h3>High Score: <span id="high-score">0</span></h3>
+        </div>
+        <div class="info">
+          <h3>Time: <span id="timer">00:00</span></h3>
+        </div>
+      </div>
 
-    <script src="script.js"></script>
+      <div class="board"></div>
+
+      <!-- Controls & Restart Header -->
+      <div class="actions">
+        <button id="restart-btn" class="btn-action">Restart Game</button>
+      </div>
+
+      <!-- On-Screen Controls for Mobile -->
+      <div class="mobile-controls">
+        <button class="btn-ctrl" id="up">▲</button>
+        <div class="controls-row">
+          <button class="btn-ctrl" id="left">◀</button>
+          <button class="btn-ctrl" id="down">▼</button>
+          <button class="btn-ctrl" id="right">▶</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Game Over Overlay Modal -->
+  <div id="game-over-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2>Game Over</h2>
+      <p>Final Score: <span id="modal-score">0</span></p>
+      <p>Time Survived: <span id="modal-time">00:00</span></p>
+      <button id="modal-restart-btn" class="btn-action">Play Again</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
-
 </html>
